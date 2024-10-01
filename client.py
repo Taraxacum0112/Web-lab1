@@ -10,6 +10,7 @@ class ClientWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.ui.button_connect.clicked.connect(self.toggle_connection)
+        self.ui.button_send.clicked.connect(self.send_message)
         self.client_socket = None
         self.is_connected = False
         self.ui.label_status.setText("Статус: не подключён")
@@ -30,10 +31,36 @@ class ClientWindow(QMainWindow):
             self.is_connected = True
             self.ui.label_status.setText("Статус: подключён")
             self.ui.button_connect.setText("Отключиться")
-            print(f'Подключено к серверу на {ip}:{port}')
+            self.ui.textBrowser.append('Подключено к серверу')
+            receive_thread = threading.Thread(target=self.receive_message)
+            receive_thread.start()
         except Exception as e:
             print(f'Ошибка подключения: {str(e)}')
             self.ui.label_status.setText("Ошибка подключения")
+
+    def send_message(self):
+        if self.client_socket and self.is_connected:
+            message = self.ui.line_message.text()
+            if message:
+                self.ui.textBrowser.append(f'Клиент: {message}')
+                self.client_socket.sendall(f'Клиент: {message}'.encode())
+                self.ui.line_message.clear()
+        else:
+            self.ui.textBrowser.append("Сообщение не отправлено: нет подключения к серверу")
+
+    def receive_message(self):
+        try:
+            while self.is_connected:
+                data = self.client_socket.recv(1024).decode()
+                if data:
+                    self.ui.textBrowser.append(data)
+                else:
+                    self.ui.textBrowser.append("Соединение с сервером потеряно")
+                    break
+        except:
+            pass
+        finally:
+            self.disconnect_from_server()
 
     def disconnect_from_server(self):
         if self.client_socket:
@@ -41,7 +68,7 @@ class ClientWindow(QMainWindow):
         self.is_connected = False
         self.ui.label_status.setText("Статус: не подключён")
         self.ui.button_connect.setText("Подключиться")
-        print("Отключено от сервера")
+        self.ui.textBrowser.append("Отключено от сервера")
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
