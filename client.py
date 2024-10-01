@@ -1,7 +1,7 @@
 import sys
+import socket
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from client_ui import Ui_MainWindow
-import socket
 
 class ClientWindow(QMainWindow):
     def __init__(self):
@@ -9,31 +9,26 @@ class ClientWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
-def connect (): # по нажатию кнопки подключиться
-    full_text = window.ui.line_ip.text()
-    ip = full_text.replace('IP: ', '').strip()
-    port = 10000
-    if (ip_is_valid(ip) and port != ""):
-        socket.connect((ip, int(port)))
-    else:
-        print(f"IP адресс должен быть в формате xxx.xxx.xxx.xxx")
-        #надо бы добавить выскакивающее окно ошибки
-        #error_ip.config(text="IP адресс должен быть в формате xxx.xxx.xxx.xxx")
+        # Привязываем кнопку подключения к серверу
+        self.ui.button_connect.clicked.connect(self.connect_to_server)
 
-def ip_is_valid (ip):
-    try:
-        host_bytes = ip.split('.')
-        valid = [int(b) for b in host_bytes]
-        valid = [b for b in valid if b>=0 and b<=255]
-        return len(host_bytes) == 4 and len(valid) == 4
-    except:
-        return False  
-    
-def send_message (): #по нажатию кнопки отправить
-    data = window.ui.line_message.text()
-    socket.sendall(data.encode())
-    
-socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # Инициализация клиентского сокета
+        self.client_socket = None
+
+    def connect_to_server(self):
+        # Получаем IP-адрес из line_ip
+        full_text = self.ui.line_ip.text()
+        ip = full_text.replace('IP: ', '').strip()
+        port = 10000  # Используем тот же порт, что и на сервере
+
+        try:
+            # Создаем клиентский сокет и подключаемся к серверу
+            self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.client_socket.connect((ip, port))
+            print(f'Подключено к серверу на {ip}:{port}')
+
+        except Exception as e:
+            print(f'Ошибка подключения: {str(e)}')
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
