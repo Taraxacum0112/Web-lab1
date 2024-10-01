@@ -42,7 +42,8 @@ class ClientWindow(QMainWindow):
         if self.client_socket and self.is_connected:
             message = self.ui.line_message.text()
             if message:
-                self.ui.textBrowser.append(f'Клиент: {message}')
+                formatted_message = f'<span style="color: green;">Клиент:</span> {message}'
+                self.ui.textBrowser.append(formatted_message)
                 self.client_socket.sendall(f'Клиент: {message}'.encode())
                 self.ui.line_message.clear()
         else:
@@ -53,14 +54,15 @@ class ClientWindow(QMainWindow):
             while self.is_connected:
                 data = self.client_socket.recv(1024).decode()
                 if data:
-                    self.ui.textBrowser.append(data)
+                    formatted_message = f'<span style="color: red;">Сервер:</span> {data.split(": ", 1)[1]}'
+                    self.ui.textBrowser.append(formatted_message)
                 else:
-                    self.ui.textBrowser.append("Соединение с сервером потеряно")
                     break
         except:
             pass
         finally:
-            self.disconnect_from_server()
+            if self.is_connected:
+                self.disconnect_from_server()
 
     def disconnect_from_server(self):
         if self.client_socket:

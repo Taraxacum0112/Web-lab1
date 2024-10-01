@@ -64,7 +64,8 @@ class ServerWindow(QMainWindow):
         if self.connection:
             message = self.ui.line_message.text()
             if message:
-                self.ui.textBrowser.append(f'Сервер: {message}')
+                formatted_message = f'<span style="color: red;">Сервер:</span> {message}'
+                self.ui.textBrowser.append(formatted_message)
                 self.connection.sendall(f'Сервер: {message}'.encode())
                 self.ui.line_message.clear()
         else:
@@ -73,15 +74,21 @@ class ServerWindow(QMainWindow):
     def receive_message(self):
         try:
             while self.is_running:
-                data = self.connection.recv(1024).decode()
-                if data:
-                    self.ui.textBrowser.append(data)
-                else:
-                    self.ui.textBrowser.append("Клиент отключился")
+                try:
+                    data = self.connection.recv(1024).decode()
+                    if data:
+                        formatted_message = f'<span style="color: green;">Клиент:</span> {data.split(": ", 1)[1]}'
+                        self.ui.textBrowser.append(formatted_message)
+                    else:
+                        break
+                except ConnectionResetError:
                     break
-        except:
-            pass
+        except Exception as e:
+            print(f'Ошибка получения данных: {str(e)}')
         finally:
+            if self.connection:
+                self.ui.textBrowser.append("Клиент отключился")
+                self.connection.close()
             self.connection = None
             self.ui.label_status.setText("Статус: не подключён")
 
