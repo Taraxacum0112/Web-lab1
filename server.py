@@ -9,6 +9,7 @@ class ServerWindow(QMainWindow):
         super().__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        self.setWindowTitle("Сервер")
         self.ui.button_run.clicked.connect(self.toggle_server)
         self.ui.button_send.clicked.connect(self.send_message)
         self.server_socket = None
@@ -17,7 +18,7 @@ class ServerWindow(QMainWindow):
         self.ip = socket.gethostbyname(socket.gethostname())
         self.port = 10000
         self.ui.label_ip.setText(f'IP: {self.ip}')
-        self.ui.label_status.setText("Статус: не подключён")
+        self.update_status_label("не подключён", "red")
 
     def toggle_server(self):
         if not self.is_running:
@@ -28,7 +29,7 @@ class ServerWindow(QMainWindow):
     def start_server(self):
         self.ui.button_run.setText("Остановить")
         self.is_running = True
-        self.ui.label_status.setText("Статус: не подключён")
+        self.update_status_label("не подключён", "red")
         self.server_thread = threading.Thread(target=self.run_server)
         self.server_thread.start()
 
@@ -38,20 +39,20 @@ class ServerWindow(QMainWindow):
             if self.connection:
                 self.connection.close()
             self.server_socket.close()
-            self.ui.textBrowser.append("Сервер остановлен")
+            self.ui.textBrowser.append('<i>Сервер остановлен</i>')
         self.ui.button_run.setText("Запустить")
-        self.ui.label_status.setText("Статус: не подключён")
+        self.update_status_label("не подключён", "red")
 
     def run_server(self):
         try:
             self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.server_socket.bind((self.ip, self.port))
             self.server_socket.listen(1)
-            self.ui.textBrowser.append('Сервер запущен, ожидание подключения...')
+            self.ui.textBrowser.append('<i>Сервер запущен, ожидание подключения...</i>')
             while self.is_running:
                 self.connection, address = self.server_socket.accept()
-                self.ui.label_status.setText("Статус: подключён")
-                self.ui.textBrowser.append('Клиент подключен')
+                self.update_status_label("подключён", "green")
+                self.ui.textBrowser.append('<i>Клиент подключен</i>')
                 receive_thread = threading.Thread(target=self.receive_message)
                 receive_thread.start()
         except Exception as e:
@@ -87,10 +88,14 @@ class ServerWindow(QMainWindow):
             print(f'Ошибка получения данных: {str(e)}')
         finally:
             if self.connection:
-                self.ui.textBrowser.append("Клиент отключился")
+                self.ui.textBrowser.append('<i>Клиент отключился</i>')
                 self.connection.close()
             self.connection = None
-            self.ui.label_status.setText("Статус: не подключён")
+            self.update_status_label("не подключён", "red")
+
+    def update_status_label(self, status_text, color):
+        formatted_text = f'Статус: <span style="color: {color};">{status_text}</span>'
+        self.ui.label_status.setText(formatted_text)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

@@ -9,11 +9,12 @@ class ClientWindow(QMainWindow):
         super().__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        self.setWindowTitle("Клиент")
         self.ui.button_connect.clicked.connect(self.toggle_connection)
         self.ui.button_send.clicked.connect(self.send_message)
         self.client_socket = None
         self.is_connected = False
-        self.ui.label_status.setText("Статус: не подключён")
+        self.update_status_label("не подключён", "red")
 
     def toggle_connection(self):
         if not self.is_connected:
@@ -29,14 +30,14 @@ class ClientWindow(QMainWindow):
             self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.client_socket.connect((ip, port))
             self.is_connected = True
-            self.ui.label_status.setText("Статус: подключён")
+            self.update_status_label("подключён", "green")
             self.ui.button_connect.setText("Отключиться")
-            self.ui.textBrowser.append('Подключено к серверу')
+            self.ui.textBrowser.append('<i>Подключено к серверу</i>')
             receive_thread = threading.Thread(target=self.receive_message)
             receive_thread.start()
-        except Exception as e:
+        except (socket.error, ConnectionRefusedError) as e:
+            self.update_status_label("Ошибка подключения", "red")
             print(f'Ошибка подключения: {str(e)}')
-            self.ui.label_status.setText("Ошибка подключения")
 
     def send_message(self):
         if self.client_socket and self.is_connected:
@@ -68,9 +69,13 @@ class ClientWindow(QMainWindow):
         if self.client_socket:
             self.client_socket.close()
         self.is_connected = False
-        self.ui.label_status.setText("Статус: не подключён")
+        self.update_status_label("не подключён", "red")
         self.ui.button_connect.setText("Подключиться")
-        self.ui.textBrowser.append("Отключено от сервера")
+        self.ui.textBrowser.append('<i>Отключено от сервера</i>')
+
+    def update_status_label(self, status_text, color):
+        formatted_text = f'Статус: <span style="color: {color};">{status_text}</span>'
+        self.ui.label_status.setText(formatted_text)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
