@@ -1,10 +1,70 @@
 import sys
 import socket
 import threading
-from PyQt5.QtWidgets import QApplication, QMainWindow
+from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QPushButton, QGridLayout, QVBoxLayout
 from ui.server_ui import Ui_MainWindow
 
 CLIENT_COLORS = ['blue', 'orange', 'brown', 'purple', 'gray']
+
+class EmojiDialog(QDialog):
+    def __init__(self, parent=None):
+        super(EmojiDialog, self).__init__(parent)
+        self.setWindowTitle('Выбор смайликов')
+
+        self.layout = QVBoxLayout()
+        grid_layout = QGridLayout()
+
+        self.emoji_list = {
+            '😊': ':smile:', '😢': ':sad:', '😂': ':laugh:', '😎': ':cool:', '😭': ':cry:',
+            '😍': ':love:', '😡': ':angry:', '🤔': ':think:', '😘': ':kiss:', '🤩': ':star_struck:',
+            '🫡': ':salute:', '🫢': ':surprised:', '🫣': ':peek:', '🤨': ':raised_eyebrow:',
+            '😐': ':neutral:', '😴': ':sleeping:', '🤤': ':drooling:', '🤮': ':vomit:',
+            '🤯': ':exploding_head:', '😷': ':mask:', '🥳': ':party:', '🤓': ':nerd:', '🥹': ':tears_of_joy:',
+            '👿': ':imp:', '😈': ':devil:', '🤬': ':cursing:', '😇': ':angel:', '🙃': ':upside_down:',
+            '👋': ':wave:', '👌': ':ok:', '🤙': ':call:', '🤟': ':rock:', '🤌': ':pinched:',
+            '👆': ':up:', '👇': ':down:', '👈': ':left:', '👉': ':right:', '🖕': ':middle_finger:',
+            '👎': ':thumb_down:', '👍': ':thumbsup:', '🙏': ':pray:', '🤝': ':handshake:',
+            '💅': ':nails:', '💪': ':muscle:', '❤️': ':heart:', '💩': ':poop:', '👾': ':alien:', '👀': ':eyes:',
+            '🤰': ':pregnant:', '🥷': ':ninja:', '💃': ':dancer:', '🌹': ':rose:', '🌸': ':blossom:',
+            '🥀': ':wilted:', '🐺': ':wolf:', '🍺': ':beer:', '🍷': ':wine:', '✨': ':sparkles:',
+            '💸': ':money_with_wings:', '📈': ':chart_up:', '📉': ':chart_down:', '🗿': ':moai:',
+            '🐱': ':cat:', '📚': ':book:'
+        }
+
+        row, col = 0, 0
+
+        for emoji, code in self.emoji_list.items():
+            button = QPushButton(emoji)
+            button.setFixedSize(40, 40)
+            button.setStyleSheet("""
+                QPushButton {
+                    background-color: rgb(255, 255, 255); 
+                    border-radius: 15px;
+                    padding: 5px;
+                    font-size: 14pt;
+                }
+                QPushButton:hover {
+                    background-color: rgb(230, 230, 230);
+                }
+            """)
+            button.clicked.connect(lambda _, e=code: self.select_emoji(e))
+
+            grid_layout.addWidget(button, row, col)
+            col += 1
+            if col > 7:
+                col = 0
+                row += 1
+
+        self.layout.addLayout(grid_layout)
+        self.setLayout(self.layout)
+        self.setGeometry(100, 100, 350, 350)
+
+    def select_emoji(self, emoji_code):
+        self.accept()
+        self.selected_emoji = emoji_code
+
+    def get_selected_emoji(self):
+        return getattr(self, 'selected_emoji', None)
 
 
 class ServerWindow(QMainWindow):
@@ -15,6 +75,7 @@ class ServerWindow(QMainWindow):
         self.setWindowTitle("Сервер")
         self.ui.button_run.clicked.connect(self.toggle_server)
         self.ui.button_send.clicked.connect(self.send_server_message)
+        self.ui.button_smiley.clicked.connect(self.open_emoji_dialog)  # Добавляем обработчик для выбора смайликов
         self.server_socket = None
         self.clients = {}
         self.client_colors = {}
@@ -75,14 +136,14 @@ class ServerWindow(QMainWindow):
 
             client_socket.sendall(f"COLOR:{color}".encode())
 
-            self.broadcast_message(f'<i><span style="color: {color};">{nickname}</span> <span style="color: black;">присоединился к чату</span></i>',None)
+            self.broadcast_message(f'<i><span style="color: {color};">{nickname}</span> <span style="color: black;">присоединился к чату</span></i>', None)
 
             self.update_status_label("подключён", "green")
 
             while True:
                 data = client_socket.recv(1024).decode()
                 if data:
-                    formatted_message = f'<span style="color: {color};">{nickname}:</span> <span style="color: black;">{data}</span>'
+                    formatted_message = f'<span style="color: {color};">{nickname}:</span> <span style="color: black;">{self.replace_emoji_codes(data)}</span>'
                     self.broadcast_message(formatted_message, client_socket)
         except:
             self.disconnect_client(client_socket)
@@ -104,9 +165,37 @@ class ServerWindow(QMainWindow):
     def send_server_message(self):
         message = self.ui.line_message.text()
         if message:
-            formatted_message = f'<span style="color: red;">Сервер:</span> <span style="color: black;">{message}</span>'
+            formatted_message = f'<span style="color: red;">Сервер:</span> <span style="color: black;">{self.replace_emoji_codes(message)}</span>'
             self.broadcast_message(formatted_message, None)
             self.ui.line_message.clear()
+
+    def open_emoji_dialog(self):
+        emoji_dialog = EmojiDialog(self)
+        if emoji_dialog.exec_():
+            emoji_code = emoji_dialog.get_selected_emoji()
+            if emoji_code:
+                current_text = self.ui.line_message.text()
+                self.ui.line_message.setText(current_text + emoji_code)
+
+    def replace_emoji_codes(self, message):
+        emoji_dict = {
+            ':smile:': '😊', ':sad:': '😢', ':laugh:': '😂', ':heart:': '❤️', ':thumbsup:': '👍',
+            ':poop:': '💩', ':alien:': '👾', ':eyes:': '👀', ':cool:': '😎', ':cry:': '😭',
+            ':love:': '😍', ':angry:': '😡', ':think:': '🤔', ':kiss:': '😘', ':star_struck:': '🤩',
+            ':salute:': '🫡', ':surprised:': '🫢', ':peek:': '🫣', ':raised_eyebrow:': '🤨', ':neutral:': '😐',
+            ':sleeping:': '😴', ':drooling:': '🤤', ':vomit:': '🤮', ':exploding_head:': '🤯', ':mask:': '😷',
+            ':party:': '🥳', ':nerd:': '🤓', ':tears_of_joy:': '🥹', ':imp:': '👿', ':devil:': '😈',
+            ':cursing:': '🤬', ':angel:': '😇', ':upside_down:': '🙃', ':wave:': '👋', ':ok:': '👌',
+            ':call:': '🤙', ':rock:': '🤟', ':pinched:': '🤌', ':up:': '👆', ':down:': '👇',
+            ':left:': '👈', ':right:': '👉', ':middle_finger:': '🖕', ':thumb_down:': '👎', ':pray:': '🙏',
+            ':handshake:': '🤝', ':nails:': '💅', ':muscle:': '💪', ':pregnant:': '🤰', ':ninja:': '🥷',
+            ':dancer:': '💃', ':rose:': '🌹', ':blossom:': '🌸', ':wilted:': '🥀', ':wolf:': '🐺',
+            ':beer:': '🍺', ':wine:': '🍷', ':sparkles:': '✨', ':money_with_wings:': '💸', ':chart_up:': '📈',
+            ':chart_down:': '📉', ':moai:': '🗿', ':cat:': '🐱', ':book:': '📚'
+        }
+        for code, emoji in emoji_dict.items():
+            message = message.replace(code, emoji)
+        return message
 
     def disconnect_client(self, client_socket):
         nickname = self.clients.pop(client_socket, None)
