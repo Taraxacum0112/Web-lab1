@@ -39,12 +39,11 @@ class EmojiDialog(QDialog):
             '👋': ':wave:', '👌': ':ok:', '🤙': ':call:', '🤟': ':rock:', '🤌': ':pinched:',
             '👆': ':up:', '👇': ':down:', '👈': ':left:', '👉': ':right:', '🖕': ':middle_finger:',
             '👎': ':thumb_down:', '👍': ':thumbsup:', '🙏': ':pray:', '🤝': ':handshake:',
-            '💅': ':nails:', '💪': ':muscle:',
-            '❤️': ':heart:', '💩': ':poop:', '👾': ':alien:', '👀': ':eyes:',
-            '🤰': ':pregnant:', '🥷': ':ninja:', '💃': ':dancer:', '🌹': ':rose:',
-            '🌸': ':blossom:', '🥀': ':wilted:', '🐺': ':wolf:', '🍺': ':beer:', '🍷': ':wine:',
-            '✨': ':sparkles:', '💸': ':money_with_wings:', '📈': ':chart_up:', '📉': ':chart_down:',
-            '🗿': ':moai:', '🐱': ':cat:', '📚': ':book:'
+            '💅': ':nails:', '💪': ':muscle:', '❤️': ':heart:', '💩': ':poop:', '👾': ':alien:', '👀': ':eyes:',
+            '🤰': ':pregnant:', '🥷': ':ninja:', '💃': ':dancer:', '🌹': ':rose:', '🌸': ':blossom:',
+            '🥀': ':wilted:', '🐺': ':wolf:', '🍺': ':beer:', '🍷': ':wine:', '✨': ':sparkles:',
+            '💸': ':money_with_wings:', '📈': ':chart_up:', '📉': ':chart_down:', '🗿': ':moai:',
+            '🐱': ':cat:', '📚': ':book:'
         }
 
         row, col = 0, 0

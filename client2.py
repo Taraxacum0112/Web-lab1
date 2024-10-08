@@ -3,13 +3,26 @@ import socket
 import threading
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QPushButton, QGridLayout, QVBoxLayout
-from ui.server_ui import Ui_MainWindow
 
-CLIENT_COLORS = ['blue', 'orange', 'brown', 'purple', 'gray']
+from ui.client_ui import Ui_MainWindow
+from ui.windnick_ui import Ui_Dialog
+
+class NicknameDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.ui = Ui_Dialog()
+        self.ui.setupUi(self)
+        self.ui.button_ok.clicked.connect(self.submit_nickname)
+        self.nickname = None
+
+    def submit_nickname(self):
+        self.nickname = self.ui.line_nickname.text()
+        if self.nickname:
+            self.accept()
 
 class EmojiDialog(QDialog):
     def __init__(self, parent=None):
-        super(EmojiDialog, self).__init__(parent)
+        super().__init__(parent)
         self.setWindowTitle('Выбор смайликов')
         self.setWindowIcon(QIcon('image/icon_wsmiley.png'))
 
@@ -29,8 +42,8 @@ class EmojiDialog(QDialog):
             '💅': ':nails:', '💪': ':muscle:', '❤️': ':heart:', '💩': ':poop:', '👾': ':alien:', '👀': ':eyes:',
             '🤰': ':pregnant:', '🥷': ':ninja:', '💃': ':dancer:', '🌹': ':rose:', '🌸': ':blossom:',
             '🥀': ':wilted:', '🐺': ':wolf:', '🍺': ':beer:', '🍷': ':wine:', '✨': ':sparkles:',
-            '💸': ':money_with_wings:', '📈': ':chart_up:', '📉': ':chart_down:', '🗿': ':moai:',
-            '🐱': ':cat:', '📚': ':book:'
+            '💸': ':money_with_wings:', '📈': ':chart_up:', '📉': ':chart_down:', '🗿': ':moai:', '🐱': ':cat:',
+            '📚': ':book:'
         }
 
         row, col = 0, 0
@@ -49,7 +62,8 @@ class EmojiDialog(QDialog):
                     background-color: rgb(230, 230, 230);
                 }
             """)
-            button.clicked.connect(lambda _, e=code: self.select_emoji(e))
+
+            button.clicked.connect(lambda _, emoji_code=code: self.select_emoji(emoji_code))
 
             grid_layout.addWidget(button, row, col)
             col += 1
@@ -68,108 +82,51 @@ class EmojiDialog(QDialog):
     def get_selected_emoji(self):
         return getattr(self, 'selected_emoji', None)
 
-
-class ServerWindow(QMainWindow):
+class ClientWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        self.setWindowTitle("Сервер")
-        self.ui.button_run.clicked.connect(self.toggle_server)
-        self.ui.button_send.clicked.connect(self.send_server_message)
+        self.setWindowTitle("Клиент")
+        self.ui.button_connect.clicked.connect(self.toggle_connection)
+        self.ui.button_send.clicked.connect(self.send_message)
         self.ui.button_smiley.clicked.connect(self.open_emoji_dialog)
-        self.server_socket = None
-        self.clients = {}
-        self.client_colors = {}
-        self.is_running = False
-        self.ip = socket.gethostbyname(socket.gethostname())
-        self.port = 10000
-        self.ui.label_ip.setText(f'IP: {self.ip}')
-        self.update_status_label("не подключён", "red")
-        self.color_index = 0
 
-    def toggle_server(self):
-        if not self.is_running:
-            self.start_server()
+        self.client_socket = None
+        self.is_connected = False
+        self.nickname = None
+        self.assigned_color = None
+        self.update_status_label("не подключён", "red")
+
+    def toggle_connection(self):
+        if not self.is_connected:
+            self.open_nickname_dialog()
         else:
-            self.stop_server()
+            self.disconnect_from_server()
 
-    def start_server(self):
-        self.ui.button_run.setText("Остановить")
-        self.is_running = True
-        self.update_status_label("не подключён", "red")
-        self.server_thread = threading.Thread(target=self.run_server)
-        self.server_thread.start()
+    def open_nickname_dialog(self):
+        dialog = NicknameDialog()
+        if dialog.exec_():
+            self.nickname = dialog.nickname
+            self.connect_to_server()
 
-    def stop_server(self):
-        if self.server_socket:
-            self.is_running = False
-            for client_socket in self.clients:
-                client_socket.close()
-            self.server_socket.close()
-            self.ui.textBrowser.append('<i>Сервер остановлен</i>')
-        self.ui.button_run.setText("Запустить")
-        self.update_status_label("не подключён", "red")
-
-    def run_server(self):
+    def connect_to_server(self):
+        full_text = self.ui.line_ip.text()
+        ip = full_text.replace('IP: ', '').strip()
+        port = 10000
         try:
-            self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.server_socket.bind((self.ip, self.port))
-            self.server_socket.listen(5)
-            self.ui.textBrowser.append('<i>Сервер запущен, ожидание подключения...</i>')
-            while self.is_running:
-                client_socket, address = self.server_socket.accept()
-                client_thread = threading.Thread(target=self.handle_client, args=(client_socket,))
-                client_thread.start()
-        except Exception as e:
-            print(f'Ошибка: {str(e)}')
-        finally:
-            if self.server_socket:
-                self.server_socket.close()
-
-    def handle_client(self, client_socket):
-        try:
-            nickname = client_socket.recv(1024).decode()
-            self.clients[client_socket] = nickname
-
-            color = CLIENT_COLORS[self.color_index % len(CLIENT_COLORS)]
-            self.client_colors[nickname] = color
-            self.color_index += 1
-
-            client_socket.sendall(f"COLOR:{color}".encode())
-
-            self.broadcast_message(f'<i><span style="color: {color};">{nickname}</span> <span style="color: black;">присоединился к чату</span></i>', None)
-
+            self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.client_socket.connect((ip, port))
+            self.client_socket.sendall(self.nickname.encode())
+            self.is_connected = True
             self.update_status_label("подключён", "green")
-
-            while True:
-                data = client_socket.recv(1024).decode()
-                if data:
-                    formatted_message = f'<span style="color: {color};">{nickname}:</span> <span style="color: black;">{self.replace_emoji_codes(data)}</span>'
-                    self.broadcast_message(formatted_message, client_socket)
-        except:
-            self.disconnect_client(client_socket)
-        finally:
-            client_socket.close()
-
-    def broadcast_message(self, message, sender_socket):
-        for client_socket in self.clients:
-            try:
-                client_socket.sendall(message.encode())
-            except:
-                self.disconnect_client(client_socket)
-
-        if sender_socket:
-            self.ui.textBrowser.append(message)
-        else:
-            self.ui.textBrowser.append(f'<span style="color: red;">{message}</span>')
-
-    def send_server_message(self):
-        message = self.ui.line_message.text()
-        if message:
-            formatted_message = f'<span style="color: red;">Сервер:</span> <span style="color: black;">{self.replace_emoji_codes(message)}</span>'
-            self.broadcast_message(formatted_message, None)
-            self.ui.line_message.clear()
+            self.ui.button_connect.setText("Отключиться")
+            self.ui.textBrowser.append(f'<i>Подключено к серверу как {self.nickname}</i>')
+            receive_thread = threading.Thread(target=self.receive_message)
+            receive_thread.start()
+        except (socket.error, ConnectionRefusedError) as e:
+            self.update_status_label("Ошибка подключения", "red")
+            print(f'Ошибка подключения: {str(e)}')
 
     def open_emoji_dialog(self):
         emoji_dialog = EmojiDialog(self)
@@ -178,6 +135,17 @@ class ServerWindow(QMainWindow):
             if emoji_code:
                 current_text = self.ui.line_message.text()
                 self.ui.line_message.setText(current_text + emoji_code)
+
+    def send_message(self):
+        if self.client_socket and self.is_connected:
+            message = self.ui.line_message.text()
+            if message:
+                formatted_message = f'<span style="color: green;">{self.nickname}:</span> {self.replace_emoji_codes(message)}'
+                self.ui.textBrowser.append(formatted_message)
+                self.client_socket.sendall(message.encode())
+                self.ui.line_message.clear()
+        else:
+            self.ui.textBrowser.append("Сообщение не отправлено: нет подключения к серверу")
 
     def replace_emoji_codes(self, message):
         emoji_dict = {
@@ -199,25 +167,36 @@ class ServerWindow(QMainWindow):
             message = message.replace(code, emoji)
         return message
 
-    def disconnect_client(self, client_socket):
-        nickname = self.clients.pop(client_socket, None)
-        if nickname:
-            color = self.client_colors.get(nickname, "black")
-            self.broadcast_message(
-                f'<i><span style="color: {color};">{nickname}</span> <span style="color: black;">покинул чат</span></i>',
-                None)
-        client_socket.close()
+    def receive_message(self):
+        try:
+            while self.is_connected:
+                data = self.client_socket.recv(1024).decode()
+                if data.startswith("COLOR:"):
+                    self.assigned_color = data.split(":")[1]
+                else:
+                    formatted_message = self.replace_emoji_codes(data)
+                    if f'{self.nickname}:' not in formatted_message:
+                        self.ui.textBrowser.append(formatted_message)
+        except:
+            pass
+        finally:
+            if self.is_connected:
+                self.disconnect_from_server()
 
-        if not self.clients:
-            self.update_status_label("не подключён", "red")
+    def disconnect_from_server(self):
+        if self.client_socket:
+            self.client_socket.close()
+        self.is_connected = False
+        self.update_status_label("не подключён", "red")
+        self.ui.button_connect.setText("Подключиться")
+        self.ui.textBrowser.append('<i>Отключено от сервера</i>')
 
     def update_status_label(self, status_text, color):
         formatted_text = f'Статус: <span style="color: {color};">{status_text}</span>'
         self.ui.label_status.setText(formatted_text)
 
-
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = ServerWindow()
+    window = ClientWindow()
     window.show()
     sys.exit(app.exec_())
