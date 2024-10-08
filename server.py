@@ -1,7 +1,6 @@
 import sys
 import socket
 import threading
-from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QPushButton, QGridLayout, QVBoxLayout
 from ui.server_ui import Ui_MainWindow
 
@@ -11,7 +10,6 @@ class EmojiDialog(QDialog):
     def __init__(self, parent=None):
         super(EmojiDialog, self).__init__(parent)
         self.setWindowTitle('Выбор смайликов')
-        self.setWindowIcon(QIcon('image/icon_wsmiley.png'))
 
         self.layout = QVBoxLayout()
         grid_layout = QGridLayout()
@@ -77,7 +75,7 @@ class ServerWindow(QMainWindow):
         self.setWindowTitle("Сервер")
         self.ui.button_run.clicked.connect(self.toggle_server)
         self.ui.button_send.clicked.connect(self.send_server_message)
-        self.ui.button_smiley.clicked.connect(self.open_emoji_dialog)
+        self.ui.button_smiley.clicked.connect(self.open_emoji_dialog)  # Добавляем обработчик для выбора смайликов
         self.server_socket = None
         self.clients = {}
         self.client_colors = {}
