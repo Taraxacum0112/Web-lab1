@@ -1,7 +1,7 @@
 import sys
 import socket
 import threading
-from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QPushButton, QGridLayout, QVBoxLayout
+from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QFileDialog, QPushButton, QGridLayout, QVBoxLayout
 from ui.server_ui import Ui_MainWindow
 
 CLIENT_COLORS = ['blue', 'orange', 'brown', 'purple', 'gray']
@@ -76,6 +76,7 @@ class ServerWindow(QMainWindow):
         self.ui.button_run.clicked.connect(self.toggle_server)
         self.ui.button_send.clicked.connect(self.send_server_message)
         self.ui.button_smiley.clicked.connect(self.open_emoji_dialog)  # Добавляем обработчик для выбора смайликов
+        self.ui.button_clip.clicked.connect(self.send_picture)
         self.server_socket = None
         self.clients = {}
         self.client_colors = {}
@@ -85,6 +86,7 @@ class ServerWindow(QMainWindow):
         self.ui.label_ip.setText(f'IP: {self.ip}')
         self.update_status_label("не подключён", "red")
         self.color_index = 0
+        self.path = None
 
     def toggle_server(self):
         if not self.is_running:
@@ -196,6 +198,26 @@ class ServerWindow(QMainWindow):
         for code, emoji in emoji_dict.items():
             message = message.replace(code, emoji)
         return message
+    
+    def send_picture(self):
+        filename = QFileDialog.getOpenFileName()
+        self.path = filename[0]
+        
+        if (self.clients):
+            for client_socket in self.clients:
+                try:
+                    data = f'PICTURE:{self.path}:' f'<span style="color: red;">Сервер:</span>'
+                    file = open(self.path, mode="rb")
+                    client_socket.sendall(data.encode())
+    
+                    data = file.read(1024)
+                    while data:
+                        client_socket.send(data)
+                        data = file.read(1024)
+                    file.close()
+                except:
+                    self.disconnect_client(client_socket)
+        self.ui.textBrowser.append(f'<span style="color: red;">Сервер:</span> <img height="300" width="300" src="{self.path}">')
 
     def disconnect_client(self, client_socket):
         nickname = self.clients.pop(client_socket, None)

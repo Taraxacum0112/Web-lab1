@@ -2,6 +2,7 @@ import sys
 import socket
 import threading
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QPushButton, QGridLayout, QVBoxLayout
+from PyQt5 import QtCore
 
 from ui.client_ui import Ui_MainWindow
 from ui.windnick_ui import Ui_Dialog
@@ -89,7 +90,8 @@ class ClientWindow(QMainWindow):
         self.ui.button_connect.clicked.connect(self.toggle_connection)
         self.ui.button_send.clicked.connect(self.send_message)
         self.ui.button_smiley.clicked.connect(self.open_emoji_dialog)
-
+        
+        self.path = None
         self.client_socket = None
         self.is_connected = False
         self.nickname = None
@@ -170,7 +172,11 @@ class ClientWindow(QMainWindow):
             while self.is_connected:
                 data = self.client_socket.recv(1024).decode()
                 if data.startswith("COLOR:"):
-                    self.assigned_color = data.split(":")[1]
+                    self.assigned_color = data.split(":")
+                elif data.startswith("PICTURE:"):
+                    self.path = data.split(":")[2].split("/")[~0]
+                    self.recieve_image()
+                    self.ui.textBrowser.append(f'<span style="color: red;">Сервер:</span> <img height="300" width="300" src="/{self.path}">')
                 else:
                     formatted_message = self.replace_emoji_codes(data)
                     if f'{self.nickname}:' not in formatted_message:
@@ -180,6 +186,19 @@ class ClientWindow(QMainWindow):
         finally:
             if self.is_connected:
                 self.disconnect_from_server()
+
+    def recieve_image(self):
+        file = open(self.path, mode = "wb")
+        img = self.client_socket.recv(1024)
+        int = 0
+        while img:
+            file.write(img)
+            img = self.client_socket.recv(1024)
+            if (len(img) < 1024):
+                file.write(img)
+                break
+            int += 1
+        file.close()
 
     def disconnect_from_server(self):
         if self.client_socket:
