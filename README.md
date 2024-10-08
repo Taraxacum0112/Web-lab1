@@ -3,6 +3,12 @@
 ## Description
 **Tipa Messenger** is a simple chat for communicating with friends and colleagues. The app is designed specifically for small groups of users. Developed in Python using sockets for network interaction, it allows easy real-time message exchange. The graphical interface is built with the PyQt library, offering a clean and minimalist user experience.
 
+## Features
+- Real-time messaging for small groups
+- Simple and minimalist interface
+- Nickname selection for users
+- Emoji support for more expressive conversations
+
 ## Instructions 
 
 1. Download the server.exe and client.exe files.
@@ -12,3 +18,7 @@
 5. You're ready to chat!
 
 Clients cannot communicate without the server running.
+
+![App Screenshot](image/scr1.jpg)
+![App Screenshot](image/scr2.jpg)
+![App Screenshot](image/scr3.jpg)
