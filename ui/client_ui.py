@@ -1,10 +1,12 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtGui import QIcon
 
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(550, 500)
+        MainWindow.setWindowIcon(QIcon('image/icon_client.png'))
         MainWindow.setStyleSheet("background-color: rgb(0, 103, 177);")
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
@@ -112,36 +114,6 @@ class Ui_MainWindow(object):
         self.horizontalLayout_2.addWidget(self.line_message)
         self.horizontalLayout_3 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_3.setObjectName("horizontalLayout_3")
-        self.button_clip = QtWidgets.QPushButton(self.layoutWidget)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.button_clip.sizePolicy().hasHeightForWidth())
-        self.button_clip.setSizePolicy(sizePolicy)
-        font = QtGui.QFont()
-        font.setFamily("Bahnschrift SemiBold")
-        font.setPointSize(10)
-        font.setBold(True)
-        font.setWeight(75)
-        self.button_clip.setFont(font)
-        self.button_clip.setStyleSheet("QPushButton {\n"
-"    background-color: rgb(255, 255, 255); \n"
-"    border-radius: 15px;                 \n"
-"    padding: 10px;                        \n"
-"}\n"
-"\n"
-"QPushButton:hover {\n"
-"    background-color: rgb(230, 230, 230);\n"
-"}\n"
-"\n"
-"")
-        self.button_clip.setText("")
-        icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("image/icon_clip.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.button_clip.setIcon(icon)
-        self.button_clip.setIconSize(QtCore.QSize(25, 25))
-        self.button_clip.setObjectName("button_clip")
-        self.horizontalLayout_3.addWidget(self.button_clip)
         self.button_smiley = QtWidgets.QPushButton(self.layoutWidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -165,9 +137,9 @@ class Ui_MainWindow(object):
 "}\n"
 "")
         self.button_smiley.setText("")
-        icon1 = QtGui.QIcon()
-        icon1.addPixmap(QtGui.QPixmap("image/icon_smiley.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.button_smiley.setIcon(icon1)
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap("image/icon_smiley.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.button_smiley.setIcon(icon)
         self.button_smiley.setIconSize(QtCore.QSize(25, 25))
         self.button_smiley.setObjectName("button_smiley")
         self.horizontalLayout_3.addWidget(self.button_smiley)
@@ -196,9 +168,9 @@ class Ui_MainWindow(object):
 "\n"
 "")
         self.button_send.setText("")
-        icon2 = QtGui.QIcon()
-        icon2.addPixmap(QtGui.QPixmap("image/icon_send.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.button_send.setIcon(icon2)
+        icon1 = QtGui.QIcon()
+        icon1.addPixmap(QtGui.QPixmap("image/icon_send.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.button_send.setIcon(icon1)
         self.button_send.setIconSize(QtCore.QSize(25, 25))
         self.button_send.setObjectName("button_send")
         self.horizontalLayout_3.addWidget(self.button_send)

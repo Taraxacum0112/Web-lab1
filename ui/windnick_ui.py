@@ -1,10 +1,12 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtGui import QIcon
 
 
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
         Dialog.resize(300, 200)
+        Dialog.setWindowIcon(QIcon('image/icon_log.png'))
         Dialog.setStyleSheet("background-color: rgb(0, 103, 177);")
 
         self.line_nickname = QtWidgets.QLineEdit(Dialog)

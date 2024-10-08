@@ -1,6 +1,7 @@
 import sys
 import socket
 import threading
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QPushButton, QGridLayout, QVBoxLayout
 
 from ui.client_ui import Ui_MainWindow
@@ -23,6 +24,7 @@ class EmojiDialog(QDialog):
     def __init__(self, parent=None):
         super(EmojiDialog, self).__init__(parent)
         self.setWindowTitle('Выбор смайликов')
+        self.setWindowIcon(QIcon('image/icon_wsmiley.png'))
 
         self.layout = QVBoxLayout()
         grid_layout = QGridLayout()
